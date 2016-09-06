@@ -11,15 +11,15 @@
 #include "vmm.h"
 #include "stdio.h"
 
-extern uint32_t *end; // Defined in linker script
-uint32_t kernel_end=0;
+extern uintptr_t *end; // Defined in linker script
+uintptr_t kernel_end=0;
 uint32_t initial_esp;
 multiboot_elf_section_header_table_t copied_elf_header;
 
 void kmain(struct multiboot *mboot_ptr, unsigned int initial_stack)
 {
 	// Mark where we end
-	kernel_end = end;
+	kernel_end = *end;
 
 	// Get initial stack location
 	initial_esp = initial_stack;

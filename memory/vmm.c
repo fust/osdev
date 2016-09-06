@@ -6,6 +6,7 @@
 #include <task.h>
 #include <debug.h>
 #include <video.h>
+#include <kmalloc.h>
 
 #define KERNEL_HEAP_INIT 0x00800000
 #define KERNEL_HEAP_END  0x20000000
@@ -84,7 +85,7 @@ void vmm_init_paging()
 	memset(kernel_directory, 0, sizeof(page_directory_t));
 }
 
-vmm_paging_activate() {
+void vmm_paging_activate() {
 	int i = 0;
 	debug("Mapping kernel memory\n");
 	while (i < placement_pointer)

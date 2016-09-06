@@ -1,6 +1,7 @@
 #include "stdio.h"
 #include <stdarg.h>
 #include "video.h"
+#include <stdlib.h>
 
 void kprintf(char * format, ...)
 {

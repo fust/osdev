@@ -14,6 +14,12 @@ static uint32_t _pmm_used = 0;
 static uint32_t _pmm_max = 0;
 static uint32_t *_pmm_bitmap=0;
 
+void pmm_bitmap_set(uint32_t bit);
+
+void pmm_bitmap_unset(uint32_t bit);
+
+uint32_t pmm_first_free();
+
 void pmm_init(uint32_t memmax);
 
 #endif

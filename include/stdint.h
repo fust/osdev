@@ -12,8 +12,8 @@ typedef signed long int 	int64_t;
 typedef unsigned long int 	uint64_t;
 
 // Integer types capable of holding pointers
-typedef int32_t 	intptr_t;
-typedef uint32_t 	uintptr_t;
+typedef int				intptr_t;
+typedef unsigned int 	uintptr_t;
 
 // Minimum-width integer types
 typedef int8_t 	int_least8_t;

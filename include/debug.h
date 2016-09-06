@@ -5,6 +5,7 @@
 #include <elf.h>
 #include <multiboot.h>
 #include <stdio.h>
+#include <cpu.h>
 
 struct symbol {
 	uint32_t *start;
@@ -22,6 +23,8 @@ void debug_init(multiboot_elf_section_header_table_t *);
 void backtrace_now(void);
 
 void debug(char * format, ...);
+
+void do_backtrace(registers_t * regs);
 
 #define PANIC(format, ...) do { \
 	kprintf("PANIC: "); \

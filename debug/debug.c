@@ -6,7 +6,9 @@
 #include <video.h>
 #include <vmm.h>
 #include <bochs/bochs.h>
+#include <string.h>
 #include <stdarg.h>
+#include <stdlib.h>
 
 static struct {
 	struct symbol *symbols;

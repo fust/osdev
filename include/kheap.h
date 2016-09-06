@@ -17,6 +17,8 @@ typedef struct _KHEAPSS {
 
 void k_heapSSInit(KHEAPSS *heap, uint32_t bsize);
 
+int k_heapSSAddBlock(KHEAPSS *heap, uintptr_t addr, uint32_t size);
+
 void *k_heapSSAlloc(KHEAPSS *heap, uint32_t size);
 
 void k_heapSSFree(KHEAPSS *heap, void *ptr);

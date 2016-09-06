@@ -5,9 +5,6 @@
 extern unsigned short *VIDEO_MEM;
 
 extern void puts(const char c);
-extern void write_string(const char *string);
-extern void write_dec(uint32_t value);
-extern void write_hex(uint32_t value);
 
 extern void cls();
 

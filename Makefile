@@ -1,7 +1,7 @@
 INCLUDES = ./include
 
 CC	= i686-elf-gcc
-CFLAGS	= -Wall -Wextra -Wno-unused-variable -nostdlib -fno-builtin -nostartfiles -nodefaultlibs -m32 -std=gnu99 -I $(INCLUDES)
+CFLAGS	= -Wall -Wextra -Wno-unused-value -Wno-unused-variable -nostdlib -fno-builtin -nostartfiles -nodefaultlibs -m32 -std=gnu99 -I $(INCLUDES)
 LD	= i686-elf-ld
 
  

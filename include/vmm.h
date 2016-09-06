@@ -26,7 +26,11 @@ typedef struct page_directory {
 	uint32_t physical_address;	/* The physical address of physical_tables */
 } page_directory_t;
 
+void alloc_frame(page_t *page, int is_kernel, int is_writable);
+
 void vmm_init_paging();
+
+void vmm_paging_activate();
 
 void vmm_switch_directory(page_directory_t *new);
 
@@ -35,6 +39,8 @@ page_t *get_page(uint32_t address, int make, page_directory_t *dir);
 uint32_t virtual_to_physical(uint32_t virtual);
 
 void page_fault(registers_t regs);
+
+void paging_mark_system(uint32_t address);
 
 void heap_install(void );
 

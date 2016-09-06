@@ -49,27 +49,6 @@ void puts(const char c )
 	cursor_x++;
 }
 
-void write_string(const char *string)
-{
-	while (*string != '\0') {
-		puts(*string++);
-	}
-}
-
-void write_dec(uint32_t value)
-{
-	char *str;
-	itoa(value, str, 10);
-	write_string(str);
-}
-
-void write_hex(uint32_t value)
-{
-	char *str;
-	itoa(value, str, 16);
-	write_string(str);
-}
-
 void cls()
 {
 	// Create attribute byty
@@ -98,7 +77,7 @@ void write_at(const char *string, uint8_t x, uint8_t y)
 	cursor_x = x;
 	cursor_y = y;
 
-	write_string(string);
+	kprintf(string);
 
 	cursor_x = orig_x;
 	cursor_y = orig_y;
