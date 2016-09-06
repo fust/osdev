@@ -1,0 +1,14 @@
+.cproject
+.project
+.settings
+*.o
+*.sh
+make_initrd
+*.dump
+*.syms
+*.bin
+*.img
+stage1
+stage2
+pad
+*.txt
