@@ -10,16 +10,21 @@
 #include "pmm.h"
 #include "vmm.h"
 #include "stdio.h"
+#include <task.h>
 
-extern uintptr_t *end; // Defined in linker script
+extern uintptr_t end; // Defined in linker script
+extern uintptr_t kernstart; // Defined in linker script
+uintptr_t kernel_start=0;
 uintptr_t kernel_end=0;
 uint32_t initial_esp;
 multiboot_elf_section_header_table_t copied_elf_header;
 
 void kmain(struct multiboot *mboot_ptr, unsigned int initial_stack)
 {
+	// Mark where we start
+	kernel_start = (uintptr_t) &kernstart;
 	// Mark where we end
-	kernel_end = *end;
+	kernel_end = (uintptr_t) &end;
 
 	// Get initial stack location
 	initial_esp = initial_stack;
@@ -42,12 +47,8 @@ void kmain(struct multiboot *mboot_ptr, unsigned int initial_stack)
 		}
 	}
 
-	if (&copied_elf_header) {
-		debug_init(&copied_elf_header);
-	}
-
 	kprintf("OS loading...\n");
-	debug("Stack is at %x.\n", initial_esp);
+	debug("Kernel end is at 0x%x, Stack is at %x.\n", end, initial_esp);
 
 	kprintf("Loading GDT...");
 	debug("Loading GDT\n");
@@ -70,33 +71,35 @@ void kmain(struct multiboot *mboot_ptr, unsigned int initial_stack)
 	kprintf("Initializing PMM with %d MB of memory...", (mem_max / 1024) / 1024);
 
 	debug("Init PMM\n");
-	pmm_init(mem_max);
-
-	kprintf("[ OK ]\n");
-
-	kprintf("Initializing VMM, paging and heap...");
-	debug("Init VMM\n");
-	vmm_init_paging();
+	pmm_init(mem_max, kernel_start, kernel_end);
 	kprintf("[ OK ]\n");
 
 	if (mboot_ptr->flags & (1 << 6)) {
-		debug("Parsing memory map\n");
-		kprintf("Parsing memory map...");
+		debug("Parsing memory map (0x%x - 0x%x)\n", mboot_ptr->mmap_addr, (mboot_ptr->mmap_addr + mboot_ptr->mmap_length));
+		kprintf("Parsing memory map... ");
 		mboot_memmap_t * mmap = (void *)mboot_ptr->mmap_addr;
 
-		while((uint32_t) mmap < mboot_ptr->mmap_addr + mboot_ptr->mmap_length) {
-			if (mmap->type != 2) { // Unusable memory
-				for (unsigned long long int i = 0; i < mmap->length; i += 0x1000) {
+		while((uint64_t) mmap < (uint64_t)(mboot_ptr->mmap_addr + mboot_ptr->mmap_length)) {
+			if (mmap->type > 1) { // Unusable memory
+				for (uint64_t i = 0; i < mmap->length; i += 0x1000) {
 					if (mmap->base_addr + i > 0xFFFFFFFF) break;
-					kprintf("Marking 0x%x", (uint32_t) mmap->base_addr + i);
+					kprintf("Marking 0x%x\n", (uint32_t) mmap->base_addr + i);
 					paging_mark_system((mmap->base_addr + i) & 0xFFFFF000);
 				}
+				debug("Found unusable memory: 0x%x - 0x%x\n", mmap->base_addr, mmap->base_addr + mmap->length);
+			} else {
+				debug("Found usable memory: 0x%x - 0x%x\n", mmap->base_addr, mmap->base_addr + mmap->length);
 			}
-			mmap = (mboot_memmap_t *) ((uint32_t)mmap + mmap->size + sizeof(uint32_t));
+			mmap = (mboot_memmap_t *) ((uint64_t)mmap + mmap->size + sizeof(uint64_t));
 		}
 
 		kprintf("[ OK ]\n");
 	}
+
+	kprintf("Initializing VMM, paging and heap...");
+	debug("Init VMM\n");
+	vmm_init_paging();
+	kprintf("[ OK ] (%d Blocks used)\n", pmm_get_used_block_count());
 
 	kprintf("Activate paging...");
 	debug("Activate paging\n");
@@ -110,10 +113,16 @@ void kmain(struct multiboot *mboot_ptr, unsigned int initial_stack)
 	debug("Heap installed\n");
 	kprintf("[ OK ]\n");
 
+	if (&copied_elf_header) {
+		debug_init(&copied_elf_header);
+	}
+
 	debug("Init timer\n");
 	init_timer(50);
 	debug("Timer enabled\n");
 	char *buf = "";
+
+	//tasking_install();
 
 	while (1) {
 		itoa(get_timer_ticks(), buf, 10);

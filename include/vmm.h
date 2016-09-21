@@ -44,8 +44,9 @@ void paging_mark_system(uint32_t address);
 
 void heap_install(void );
 
+#if 0
 void *alloc(uint32_t size);
 
 void free(void * p);
-
+#endif
 #endif

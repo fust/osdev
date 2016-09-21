@@ -3,6 +3,8 @@ ENTRY (start)
 SECTIONS
 {
     . = 0x00100000;
+    
+    kernstart = .; _kernstart = .; __kernstart = .;
 
     .__mbHeader : {
         *(.__mbHeader)

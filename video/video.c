@@ -23,17 +23,15 @@ void puts(const char c )
 	}
 
 	// Calculate the offset
-	if (cursor_x > 80) {
+	if (cursor_x >= 80) {
 		cursor_y++;
 		cursor_x = 0;
 	}
 
 	if (cursor_y > 25) {
 		// Scrolling
-		for (size_t i = 1; i <= 25; i++) {
-			uint16_t *loc = VIDEO_MEM + (i * 80);
-			uint16_t *dst = VIDEO_MEM + ((i - 1) * 80);
-			memcpy(loc, dst, sizeof(char) * 80);
+		for (size_t i = 0*80; i < 24*80; i++) {
+			VIDEO_MEM[i] = VIDEO_MEM[i+80];
 		}
 		cursor_y = 0;
 	}

@@ -29,3 +29,8 @@ copy_page_physical:
    popf                  ; Pop EFLAGS back.
    pop ebx               ; Get the original value of EBX back.
    ret
+
+[GLOBAL read_eip]
+read_eip:
+   mov eax, [esp]
+   ret

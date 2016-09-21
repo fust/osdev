@@ -210,11 +210,13 @@ void debug(char * format, ...)
 					str = va_arg(argptr, char *);
 					debug(str);
 					break;
+				case 'X':
 				case 'x':
 					num = va_arg(argptr, int);
 					itoa(num, s, 16);
 					debug(s);
 					break;
+				case 'i':
 				case 'd':
 					num = va_arg(argptr, int);
 					itoa(num, s, 10);

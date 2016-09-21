@@ -1,4 +1,4 @@
-#ifndef __DEBUG__H
+#ifndef __DEBUG_H
 #define __DEBUG_H
 
 #include <stdint.h>
@@ -37,7 +37,7 @@ void do_backtrace(registers_t * regs);
 
 #define ASSERT(x, format, ...) do { \
 	if (!(x)) { \
-		kprintf("%s: %s\n", __FILE__, #x); \
+		kprintf("%s (%d): %s\n", __FILE__, __LINE__, #x); \
 		backtrace_now(); \
 		PANIC(format, ##__VA_ARGS__); \
 	} \

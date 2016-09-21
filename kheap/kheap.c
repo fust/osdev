@@ -1,5 +1,6 @@
 #include <kheap.h>
 #include <stdio.h>
+#include <debug.h>
 
 void k_heapSSInit(KHEAPSS *heap, uint32_t bsize) {
 	heap->fblock = 0;
@@ -33,6 +34,8 @@ int k_heapSSAddBlock(KHEAPSS *heap, uintptr_t addr, uint32_t size) {
 	for (x = slotres; x < b->max; ++x) {
 		stack[x] = x * heap->bsize;
 	}
+
+	debug("\t\t\tAdded block. Size: %x, Max: %d, Top: %d\n", b->size, b->max, b->top);
 
 	return 1;
 }
