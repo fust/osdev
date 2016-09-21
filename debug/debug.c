@@ -2,9 +2,7 @@
 #include "stdio.h"
 #include "stddef.h"
 #include <cpu.h>
-#include <kmalloc.h>
 #include <video.h>
-#include <vmm.h>
 #include <bochs/bochs.h>
 #include <string.h>
 #include <stdarg.h>
@@ -15,6 +13,7 @@ static struct {
 	int count;
 } symbol_table;
 
+#if 0
 static void get_elf32_symbols_mboot(uint32_t section_headers, Elf32_Half shnum, Elf32_Half shstrndx)
 {
 	Elf32_Shdr *sh_table;
@@ -179,7 +178,7 @@ void do_backtrace(registers_t * regs)
 {
 	backtrace(regs->ebp);
 }
-
+#endif
 void debug(char * format, ...)
 {
 	va_list argptr;
