@@ -26,7 +26,7 @@ void kprintf(char * format, ...)
 					kprintf(s);
 					break;
 				case 'c':
-					c = va_arg(argptr, char);
+					c = va_arg(argptr, int); // Yes, it *should* be char but them the compiler complains.
 					puts(c);
 					break;
 				case 's':

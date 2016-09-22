@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <cpu.h>
 
+#define BOCHS_BREAK() { asm volatile ("xchgw %bx, %bx"); }
+
 struct symbol {
 	uint32_t *start;
 	uint32_t *end;

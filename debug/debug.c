@@ -202,7 +202,7 @@ void debug(char * format, ...)
 					debug(s);
 					break;
 				case 'c':
-					c = va_arg(argptr, char);
+					c = va_arg(argptr, int); // Yes, it *should* be char but them the compiler complains.
 					BochsConsolePrintChar(c);
 					break;
 				case 's':

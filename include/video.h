@@ -8,6 +8,6 @@ extern void puts(const char c);
 
 extern void cls();
 
-extern void write_at(const char *string, uint8_t x, uint8_t y);
+extern void write_at(char *string, uint8_t x, uint8_t y);
 
 #endif

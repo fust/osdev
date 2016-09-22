@@ -1,6 +1,7 @@
 #include "video.h"
 #include "stdlib.h"
 #include "string.h"
+#include "stdio.h"
 
 unsigned short *VIDEO_MEM = (unsigned short *)0xB8000;
 
@@ -64,7 +65,7 @@ void cls()
 	cursor_y = 0;
 }
 
-void write_at(const char *string, uint8_t x, uint8_t y)
+void write_at(char *string, uint8_t x, uint8_t y)
 {
 	if (x > 80 || y > 25) {
 		return;

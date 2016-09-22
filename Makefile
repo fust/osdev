@@ -5,7 +5,7 @@ CFLAGS	= -Wall -Wextra -Wno-unused-value -Wno-unused-variable -nostdlib -fno-bui
 LD	= i686-elf-ld
 
  
-OBJFILES =  stdio/kprintf.o debug/debug.o timer.o interrupts.o idt.o gdt.o asm/interrupts.o io.o video/video.o stdlib.o string.o boot.o kernel.o
+OBJFILES =  mem/pmm.o sys/bitmap.o mem/kmalloc.o stdio/kprintf.o debug/debug.o timer.o interrupts.o idt.o gdt.o asm/interrupts.o io.o video/video.o stdlib.o string.o boot.o kernel.o
  
 all: kernel.img
  

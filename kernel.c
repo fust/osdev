@@ -2,14 +2,16 @@
 #include "video.h"
 #include "gdt.h"
 #include "idt.h"
+#include "mem/pmm.h"
 #include "interrupts.h"
 #include "timer.h"
 #include "stddef.h"
 #include "elf.h"
 #include "debug.h"
 #include "stdio.h"
+#include "stdlib.h"
 
-extern uintptr_t *end; // Defined in linker script
+extern uintptr_t end; // Defined in linker script
 uintptr_t kernel_end=0;
 uint32_t initial_esp;
 multiboot_elf_section_header_table_t copied_elf_header;
@@ -17,7 +19,7 @@ multiboot_elf_section_header_table_t copied_elf_header;
 void kmain(struct multiboot *mboot_ptr, unsigned int initial_stack)
 {
 	// Mark where we end
-	kernel_end = *end;
+	kernel_end = (uintptr_t) &end;
 
 	// Get initial stack location
 	initial_esp = initial_stack;
@@ -68,6 +70,8 @@ void kmain(struct multiboot *mboot_ptr, unsigned int initial_stack)
 
 	kprintf("Interrupts enabled...\n");
 	kprintf("Initializing PMM with %d MB of memory...", (mem_max / 1024) / 1024);
+	pmm_init(mem_max, kernel_end);
+	kprintf(" [ OK ]\n");
 
 	debug("Init timer\n");
 	init_timer(50);
