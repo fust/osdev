@@ -8,7 +8,7 @@
 /**
  * Create a new bitmap
  *
- * num_indices: The number of indices to hold. Is devided by BYTE_SIZE internally.
+ * num_indices: The number of indices to hold. Is divided by BYTE_SIZE internally.
  *
  * returns: the bitmap created or NULL on failure
  */
