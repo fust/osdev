@@ -7,13 +7,13 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include "mem/kmalloc.h"
 
 static struct {
 	struct symbol *symbols;
 	int count;
 } symbol_table;
 
-#if 0
 static void get_elf32_symbols_mboot(uint32_t section_headers, Elf32_Half shnum, Elf32_Half shstrndx)
 {
 	Elf32_Shdr *sh_table;
@@ -24,7 +24,7 @@ static void get_elf32_symbols_mboot(uint32_t section_headers, Elf32_Half shnum, 
 	int i;
 	uint32_t strtable_size = 0;
 
-	sh_table = section_headers;
+	sh_table = (Elf32_Shdr *) section_headers;
 
 	for (i = 0; i < shnum; i++) {
 		if (i == shstrndx)
@@ -36,7 +36,8 @@ static void get_elf32_symbols_mboot(uint32_t section_headers, Elf32_Half shnum, 
 			if (sh_table[i].sh_addr == 0)
 				continue;
 
-			strings = kmalloc(sh_table[i].sh_size);
+			strings = (char *) kmalloc(sh_table[i].sh_size);
+
 			if (!strings) {
 				kprintf("Warning: Failed to allocate memory for strings\n");
 				return;
@@ -44,7 +45,7 @@ static void get_elf32_symbols_mboot(uint32_t section_headers, Elf32_Half shnum, 
 
 			strtable_size = sh_table[i].sh_size;
 
-			memcpy(strings, sh_table[i].sh_addr, sh_table[i].sh_size);
+			memcpy(strings, (Elf32_Addr *) sh_table[i].sh_addr, sh_table[i].sh_size);
 		}
 
 		if (sh_table[i].sh_type == SHT_SYMTAB) {
@@ -79,7 +80,7 @@ static void get_elf32_symbols_mboot(uint32_t section_headers, Elf32_Half shnum, 
 	if (!strings || !syms)
 		return;
 
-	symbol_table.symbols = kmalloc(sizeof(struct symbol) * function_syms);
+	symbol_table.symbols = (struct symbol *) kmalloc(sizeof(struct symbol) * function_syms);
 	if (!symbol_table.symbols) {
 		kprintf("Warning: Failed to allocate space for symbols\n");
 		kfree(strings);
@@ -97,6 +98,7 @@ static void get_elf32_symbols_mboot(uint32_t section_headers, Elf32_Half shnum, 
 		symbol_table.symbols[--function_syms].start = (uint32_t *)sym->st_value;
 		symbol_table.symbols[function_syms].end = (uint32_t *)(sym->st_value + sym->st_size);
 		symbol_table.symbols[function_syms].name = &strings[sym->st_name];
+		debug("DEBUG:\tFound symbol: 0x%x - 0x%x: %s\n", (uint32_t *)sym->st_value, (uint32_t *)(sym->st_value + sym->st_size), &strings[sym->st_name]);
 	}
 
 	if (function_syms) {
@@ -116,7 +118,7 @@ void get_elf_symbols_mboot(multiboot_elf_section_header_table_t *mboot_elf)
 
 void debug_init(multiboot_elf_section_header_table_t * elf_header)
 {
-	debug("Kernel symbols present: %x\nDebugger initializing.\n", elf_header->addr);
+	debug("Kernel symbols present: %x\nDebugger initializing.", elf_header->addr);
 	get_elf_symbols_mboot(elf_header);
 }
 
@@ -155,9 +157,9 @@ void backtrace(void *fp)
 		struct sym_offset sym_offset = get_symbol((void *)prev_ip);
 		kprintf("\t%s (+0x%x) [0x%x]\n", sym_offset.name, sym_offset.offset, prev_ip);
 		debug("\t%s (+0x%x) [0x%x]\n", sym_offset.name, sym_offset.offset, prev_ip);
-		fp = prev_ebp;
+		fp = (void *) prev_ebp;
 		/*  Stop if ebp is not in the kernel */
-		if (fp <= 0x00100000)// || fp >= kernel_end)
+		if (fp <= (void *)0x00100000)// || fp >= kernel_end)
 			break;
 	} while(1);
 }
@@ -171,14 +173,14 @@ void backtrace_now(void)
 	kprintf("==== Backtrace:\n");
 	debug("==== Backtrace:\n");
 
-	backtrace(fp);
+	backtrace((void *) fp);
 }
 
 void do_backtrace(registers_t * regs)
 {
-	backtrace(regs->ebp);
+	backtrace((void *) regs->ebp);
 }
-#endif
+
 void debug(char * format, ...)
 {
 	va_list argptr;

@@ -12,7 +12,7 @@
 #include "stdlib.h"
 
 extern uintptr_t end; // Defined in linker script
-uintptr_t kernel_end=0;
+uintptr_t kernel_end = 0;
 uint32_t initial_esp;
 multiboot_elf_section_header_table_t copied_elf_header;
 
@@ -20,6 +20,8 @@ void kmain(struct multiboot *mboot_ptr, unsigned int initial_stack)
 {
 	// Mark where we end
 	kernel_end = (uintptr_t) &end;
+
+	pmm_set_kernel_end(kernel_end); // Now kmalloc() works!
 
 	// Get initial stack location
 	initial_esp = initial_stack;
@@ -34,7 +36,16 @@ void kmain(struct multiboot *mboot_ptr, unsigned int initial_stack)
 
 	cls();
 
-#if 0
+	if (mboot_ptr->flags & MULTIBOOT_FLAG_MMAP) {
+		debug("Found a memory map (Thanks, %s!): 0x%x with length %d (%d items)\n", mboot_ptr->boot_loader_name, mboot_ptr->mmap_addr, mboot_ptr->mmap_length, mboot_ptr->mmap_length / sizeof(mboot_memmap_t));
+
+		mboot_memmap_t* mmap = mboot_ptr->mmap_addr;
+		while(mmap < mboot_ptr->mmap_addr + mboot_ptr->mmap_length) {
+			mmap = (mboot_memmap_t*) ( (unsigned int)mmap + mmap->size + sizeof(mmap->size) );
+			debug("\tFound memory region: 0x%x length: 0x%x type: %x.\n", mmap->base_addr, mmap->length, mmap->type);
+		}
+	}
+
 	if (mboot_ptr->flags & MULTIBOOT_INFO_ELF_SHDR) {
 		if (mboot_ptr->u.elf_sec.size == sizeof(Elf32_Shdr)) {
 			copied_elf_header = mboot_ptr->u.elf_sec;
@@ -46,7 +57,6 @@ void kmain(struct multiboot *mboot_ptr, unsigned int initial_stack)
 	if (&copied_elf_header) {
 		debug_init(&copied_elf_header);
 	}
-#endif
 
 	kprintf("OS loading...\n");
 	debug("Stack is at %x.\n", initial_esp);
@@ -70,8 +80,10 @@ void kmain(struct multiboot *mboot_ptr, unsigned int initial_stack)
 
 	kprintf("Interrupts enabled...\n");
 	kprintf("Initializing PMM with %d MB of memory...", (mem_max / 1024) / 1024);
-	pmm_init(mem_max, kernel_end);
+	pmm_init(mem_max);
 	kprintf(" [ OK ]\n");
+
+	pmm_alloc();
 
 	debug("Init timer\n");
 	init_timer(50);

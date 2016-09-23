@@ -11,4 +11,6 @@ uintptr_t *kmalloc_p(uint32_t size, uintptr_t *phys);
 
 uintptr_t *kmalloc_ap(uint32_t size, uintptr_t *phys);
 
+void kfree(void *p);
+
 #endif

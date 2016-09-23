@@ -45,3 +45,9 @@ uintptr_t *kmalloc_ap(uint32_t size, uintptr_t *phys)
 {
 	return kmalloc_int(size, 1, phys);
 }
+
+void kfree(void *p)
+{
+	p = p; // Work around compiler warning for unused variables
+	return;
+}

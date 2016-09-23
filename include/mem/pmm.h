@@ -4,7 +4,9 @@
 #include "stdint.h"
 #include "stddef.h"
 
-void pmm_init(uint32_t mem_size, uint32_t kernel_end);
+void pmm_set_kernel_end(uint32_t kernel_end);
+
+void pmm_init(uint32_t mem_size);
 
 uintptr_t *pmm_alloc();
 
