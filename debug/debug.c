@@ -98,7 +98,6 @@ static void get_elf32_symbols_mboot(uint32_t section_headers, Elf32_Half shnum, 
 		symbol_table.symbols[--function_syms].start = (uint32_t *)sym->st_value;
 		symbol_table.symbols[function_syms].end = (uint32_t *)(sym->st_value + sym->st_size);
 		symbol_table.symbols[function_syms].name = &strings[sym->st_name];
-		debug("DEBUG:\tFound symbol: 0x%x - 0x%x: %s\n", (uint32_t *)sym->st_value, (uint32_t *)(sym->st_value + sym->st_size), &strings[sym->st_name]);
 	}
 
 	if (function_syms) {
