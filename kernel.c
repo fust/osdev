@@ -10,6 +10,8 @@
 #include "debug.h"
 #include "stdio.h"
 #include "stdlib.h"
+#include "mem/kmalloc.h"
+#include "mem/paging.h"
 
 extern uintptr_t end; // Defined in linker script
 uintptr_t kernel_end = 0;
@@ -83,7 +85,22 @@ void kmain(struct multiboot *mboot_ptr, unsigned int initial_stack)
 	pmm_init(mem_max);
 	kprintf(" [ OK ]\n");
 
-	pmm_alloc();
+	debug("Initializing paging...");
+	paging_init();
+	debug(" [ OK ]\n");
+
+#if 0
+	// This will be used for testing once the kernel heap allocator is done.
+	uint32_t phys1;
+	uint32_t phys2;
+	uint32_t *alloc1 = (uint32_t *)kmalloc_p(sizeof(uint32_t), (uintptr_t *)(&phys1));
+	uint32_t *alloc2 = (uint32_t *)kmalloc_p(sizeof(uint32_t), (uintptr_t *)(&phys2));
+	debug("Allocated...\n");
+
+	*alloc1 = 0x1000;
+	*alloc2 = 0x1000;
+	debug("Allocate block at 0x%x and 0x%x. Values: (%x, %x), Phys (0x%x, 0x%x)\n", alloc1, alloc2, *alloc1, *alloc2, phys1, phys2);
+#endif
 
 	debug("Init timer\n");
 	init_timer(50);
