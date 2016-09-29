@@ -26,6 +26,8 @@ typedef struct page_directory {
 
 void paging_init();
 
+void map_page(page_t *page, int is_writable, int is_kernel);
+
 page_t *get_page(uintptr_t address, int make, page_directory_t * dir);
 
 void switch_page_directory(page_directory_t * dir);

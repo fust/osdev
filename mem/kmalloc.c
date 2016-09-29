@@ -1,5 +1,6 @@
 #include "mem/kmalloc.h"
 #include "mem/pmm.h"
+#include "mem/liballoc/liballoc.h"
 #include "stdint.h"
 #include "string.h"
 #include "sys/bitmap.h"
@@ -7,6 +8,7 @@
 
 extern uint32_t placement_pointer; // Defined in pmm.c
 extern bitmap_t *pmm_map; // Defined in pmm.c
+extern uintptr_t heap_end; // Defined in kheap.c
 
 uintptr_t *kmalloc_int(uint32_t size, uint32_t align, uintptr_t *phys)
 {
@@ -29,7 +31,7 @@ uintptr_t *kmalloc_int(uint32_t size, uint32_t align, uintptr_t *phys)
 		}
 
 		return (uintptr_t *)address;
-	} else { // Physical memory management has been initialized, use that.
+	} else if (pmm_map && !heap_end) { // Physical memory management has been initialized, use that.
 		uint32_t blocks = size / 0x1000;
 		if (size % 0x1000 > 0) {
 			blocks++;
@@ -40,7 +42,16 @@ uintptr_t *kmalloc_int(uint32_t size, uint32_t align, uintptr_t *phys)
 			*phys = (uint32_t) address;
 		}
 		return address;
+	} else if (heap_end) { // Virtual memory is enabled, pass through to liballoc
+		uintptr_t *address = (uintptr_t *)malloc(size);
+
+		if (phys) {
+			// *phys = virtual_to_physical(address);
+		}
+		return address;
 	}
+
+	return NULL;
 }
 
 uintptr_t *kmalloc(uint32_t size)

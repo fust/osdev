@@ -1,16 +1,21 @@
 #include "mem/paging.h"
 #include "mem/pmm.h"
 #include "mem/kmalloc.h"
+#include "mem/kheap.h"
 #include "sys/bitmap.h"
 #include "string.h"
 #include "stdint.h"
 #include "cpu.h"
 #include "idt.h"
 #include "debug.h"
+#include "spinlock.h"
 
 page_directory_t *kernel_directory = NULL;
 page_directory_t *current_directory = NULL;
 extern bitmap_t *pmm_map;
+extern uintptr_t *heap_start;
+
+static volatile int *alloc_lock = 0;
 
 /**
  * Map a page to an address in the physical memory
@@ -23,10 +28,13 @@ void map_page(page_t *page, int is_writable, int is_kernel)
 		page->user = is_kernel ? 0 : 1;
 		return;
 	} else { // Page is not mapped
+	//	spin_lock(alloc_lock); // This is getting a bit touchy....
 		uint32_t frame = (uint32_t)bitmap_first_free(pmm_map);
 
 		ASSERT(frame != (uint32_t) -1, "Out of free frames!");
 		bitmap_set(pmm_map, (bitmap_index_t) frame);
+
+	//	spin_unlock(alloc_lock);
 
 		page->present = 1;
 		page->rw = is_writable ? 1 : 0;
@@ -71,11 +79,21 @@ void paging_init()
 		map_dma_page(get_page((uintptr_t)i, 1, kernel_directory), 1, 0, (uintptr_t)i);
 	}
 
+	// Pre-allocate the heap's memory (512K)
+	for (uint32_t i = dma_end + 0x3000; i <= (dma_end + 0x3000 + 0x80000); i+= 0x1000) {
+		get_page((uintptr_t) i, 1, kernel_directory);
+	}
+
+	// Set the heap's starting address
+	heap_start = (uintptr_t *) (dma_end + 0x3000);
+
 	// Register the pagefault handler
 	register_interrupt_handler(14, &page_fault);
 
 	// Load CR3 with the new page directory
 	switch_page_directory(kernel_directory);
+
+	heap_install(heap_start);
 }
 
 page_t *get_page(uintptr_t address, int make, page_directory_t * dir)

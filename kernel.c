@@ -12,6 +12,7 @@
 #include "stdlib.h"
 #include "mem/kmalloc.h"
 #include "mem/paging.h"
+#include "mem/liballoc/liballoc.h"
 
 extern uintptr_t end; // Defined in linker script
 uintptr_t kernel_end = 0;
