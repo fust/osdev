@@ -39,7 +39,7 @@ void map_page(page_t *page, int is_writable, int is_kernel)
 		page->present = 1;
 		page->rw = is_writable ? 1 : 0;
 		page->user = is_kernel ? 0 : 1;
-		page->frame = (uintptr_t)(frame * 0x1000);
+		page->frame = (uintptr_t)(frame);
 	}
 }
 
