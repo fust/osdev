@@ -6,6 +6,7 @@ uint32_t ticks = 0;
 
 static void timer_callback(registers_t regs)
 {
+	regs = regs; // Suppress compiler warning about unused parameter
 	ticks++;
 }
 

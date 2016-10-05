@@ -2,8 +2,12 @@
 #define __STRING_H
 #include "stddef.h"
 
-extern void *memset(void *str, char c, size_t n);
+void *memset(void *str, char c, size_t n);
 
-extern void *memcpy(void *dst, const void *src, size_t len);
+void *memcpy(void *dst, const void *src, size_t len);
+
+int strcmp(const char * str1, const char *str2);
+
+char *strcpy (char *destination, const char *source);
 
 #endif

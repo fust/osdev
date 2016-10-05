@@ -2,13 +2,12 @@
 #include "stdio.h"
 #include "stddef.h"
 #include <cpu.h>
-#include <kmalloc.h>
 #include <video.h>
-#include <vmm.h>
 #include <bochs/bochs.h>
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include "mem/kmalloc.h"
 
 static struct {
 	struct symbol *symbols;
@@ -25,7 +24,7 @@ static void get_elf32_symbols_mboot(uint32_t section_headers, Elf32_Half shnum, 
 	int i;
 	uint32_t strtable_size = 0;
 
-	sh_table = section_headers;
+	sh_table = (Elf32_Shdr *) section_headers;
 
 	for (i = 0; i < shnum; i++) {
 		if (i == shstrndx)
@@ -37,7 +36,8 @@ static void get_elf32_symbols_mboot(uint32_t section_headers, Elf32_Half shnum, 
 			if (sh_table[i].sh_addr == 0)
 				continue;
 
-			strings = kmalloc(sh_table[i].sh_size);
+			strings = (char *) kmalloc(sh_table[i].sh_size);
+
 			if (!strings) {
 				kprintf("Warning: Failed to allocate memory for strings\n");
 				return;
@@ -45,7 +45,7 @@ static void get_elf32_symbols_mboot(uint32_t section_headers, Elf32_Half shnum, 
 
 			strtable_size = sh_table[i].sh_size;
 
-			memcpy(strings, sh_table[i].sh_addr, sh_table[i].sh_size);
+			memcpy(strings, (Elf32_Addr *) sh_table[i].sh_addr, sh_table[i].sh_size);
 		}
 
 		if (sh_table[i].sh_type == SHT_SYMTAB) {
@@ -80,7 +80,7 @@ static void get_elf32_symbols_mboot(uint32_t section_headers, Elf32_Half shnum, 
 	if (!strings || !syms)
 		return;
 
-	symbol_table.symbols = kmalloc(sizeof(struct symbol) * function_syms);
+	symbol_table.symbols = (struct symbol *) kmalloc(sizeof(struct symbol) * function_syms);
 	if (!symbol_table.symbols) {
 		kprintf("Warning: Failed to allocate space for symbols\n");
 		kfree(strings);
@@ -117,7 +117,7 @@ void get_elf_symbols_mboot(multiboot_elf_section_header_table_t *mboot_elf)
 
 void debug_init(multiboot_elf_section_header_table_t * elf_header)
 {
-	debug("Kernel symbols present: %x\nDebugger initializing.\n", elf_header->addr);
+	debug("Kernel symbols present: %x\nDebugger initializing.", elf_header->addr);
 	get_elf_symbols_mboot(elf_header);
 }
 
@@ -156,9 +156,9 @@ void backtrace(void *fp)
 		struct sym_offset sym_offset = get_symbol((void *)prev_ip);
 		kprintf("\t%s (+0x%x) [0x%x]\n", sym_offset.name, sym_offset.offset, prev_ip);
 		debug("\t%s (+0x%x) [0x%x]\n", sym_offset.name, sym_offset.offset, prev_ip);
-		fp = prev_ebp;
+		fp = (void *) prev_ebp;
 		/*  Stop if ebp is not in the kernel */
-		if (fp <= 0x00100000)// || fp >= kernel_end)
+		if (fp <= (void *)0x00100000)// || fp >= kernel_end)
 			break;
 	} while(1);
 }
@@ -172,12 +172,12 @@ void backtrace_now(void)
 	kprintf("==== Backtrace:\n");
 	debug("==== Backtrace:\n");
 
-	backtrace(fp);
+	backtrace((void *) fp);
 }
 
 void do_backtrace(registers_t * regs)
 {
-	backtrace(regs->ebp);
+	backtrace((void *) regs->ebp);
 }
 
 void debug(char * format, ...)
@@ -203,7 +203,7 @@ void debug(char * format, ...)
 					debug(s);
 					break;
 				case 'c':
-					c = va_arg(argptr, char);
+					c = va_arg(argptr, int); // Yes, it *should* be char but them the compiler complains.
 					BochsConsolePrintChar(c);
 					break;
 				case 's':

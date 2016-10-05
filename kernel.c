@@ -2,24 +2,29 @@
 #include "video.h"
 #include "gdt.h"
 #include "idt.h"
+#include "mem/pmm.h"
 #include "interrupts.h"
 #include "timer.h"
 #include "stddef.h"
 #include "elf.h"
 #include "debug.h"
-#include "pmm.h"
-#include "vmm.h"
 #include "stdio.h"
+#include "stdlib.h"
+#include "mem/kmalloc.h"
+#include "mem/paging.h"
+#include "mem/liballoc/liballoc.h"
 
-extern uintptr_t *end; // Defined in linker script
-uintptr_t kernel_end=0;
+extern uintptr_t end; // Defined in linker script
+uintptr_t kernel_end = 0;
 uint32_t initial_esp;
 multiboot_elf_section_header_table_t copied_elf_header;
 
 void kmain(struct multiboot *mboot_ptr, unsigned int initial_stack)
 {
 	// Mark where we end
-	kernel_end = *end;
+	kernel_end = (uintptr_t) &end;
+
+	pmm_set_kernel_end(kernel_end); // Now kmalloc() works!
 
 	// Get initial stack location
 	initial_esp = initial_stack;
@@ -33,6 +38,16 @@ void kmain(struct multiboot *mboot_ptr, unsigned int initial_stack)
 	// Mem_max is now either 0 or the memory size in bytes
 
 	cls();
+
+	if (mboot_ptr->flags & MULTIBOOT_FLAG_MMAP) {
+		debug("Found a memory map (Thanks, %s!): 0x%x with length %d (%d items)\n", mboot_ptr->boot_loader_name, mboot_ptr->mmap_addr, mboot_ptr->mmap_length, mboot_ptr->mmap_length / sizeof(mboot_memmap_t));
+
+		mboot_memmap_t* mmap = mboot_ptr->mmap_addr;
+		while(mmap < mboot_ptr->mmap_addr + mboot_ptr->mmap_length) {
+			mmap = (mboot_memmap_t*) ( (unsigned int)mmap + mmap->size + sizeof(mmap->size) );
+			debug("\tFound memory region: 0x%x length: 0x%x type: %x.\n", mmap->base_addr, mmap->length, mmap->type);
+		}
+	}
 
 	if (mboot_ptr->flags & MULTIBOOT_INFO_ELF_SHDR) {
 		if (mboot_ptr->u.elf_sec.size == sizeof(Elf32_Shdr)) {
@@ -68,47 +83,25 @@ void kmain(struct multiboot *mboot_ptr, unsigned int initial_stack)
 
 	kprintf("Interrupts enabled...\n");
 	kprintf("Initializing PMM with %d MB of memory...", (mem_max / 1024) / 1024);
-
-	debug("Init PMM\n");
 	pmm_init(mem_max);
+	kprintf(" [ OK ]\n");
 
-	kprintf("[ OK ]\n");
+	debug("Initializing paging...");
+	paging_init();
+	debug(" [ OK ]\n");
 
-	kprintf("Initializing VMM, paging and heap...");
-	debug("Init VMM\n");
-	vmm_init_paging();
-	kprintf("[ OK ]\n");
+#if 0
+	// This will be used for testing once the kernel heap allocator is done.
+	uint32_t phys1;
+	uint32_t phys2;
+	uint32_t *alloc1 = (uint32_t *)kmalloc_p(sizeof(uint32_t), (uintptr_t *)(&phys1));
+	uint32_t *alloc2 = (uint32_t *)kmalloc_p(sizeof(uint32_t), (uintptr_t *)(&phys2));
+	debug("Allocated...\n");
 
-	if (mboot_ptr->flags & (1 << 6)) {
-		debug("Parsing memory map\n");
-		kprintf("Parsing memory map...");
-		mboot_memmap_t * mmap = (void *)mboot_ptr->mmap_addr;
-
-		while((uint32_t) mmap < mboot_ptr->mmap_addr + mboot_ptr->mmap_length) {
-			if (mmap->type != 2) { // Unusable memory
-				for (unsigned long long int i = 0; i < mmap->length; i += 0x1000) {
-					if (mmap->base_addr + i > 0xFFFFFFFF) break;
-					kprintf("Marking 0x%x", (uint32_t) mmap->base_addr + i);
-					paging_mark_system((mmap->base_addr + i) & 0xFFFFF000);
-				}
-			}
-			mmap = (mboot_memmap_t *) ((uint32_t)mmap + mmap->size + sizeof(uint32_t));
-		}
-
-		kprintf("[ OK ]\n");
-	}
-
-	kprintf("Activate paging...");
-	debug("Activate paging\n");
-	vmm_paging_activate();
-	debug("Paging active\n");
-	kprintf("[ OK ]\n");
-
-	kprintf("Installing heap...");
-	debug("Installing heap\n");
-	heap_install();
-	debug("Heap installed\n");
-	kprintf("[ OK ]\n");
+	*alloc1 = 0x1000;
+	*alloc2 = 0x1000;
+	debug("Allocate block at 0x%x and 0x%x. Values: (%x, %x), Phys (0x%x, 0x%x)\n", alloc1, alloc2, *alloc1, *alloc2, phys1, phys2);
+#endif
 
 	debug("Init timer\n");
 	init_timer(50);

@@ -4,6 +4,6 @@
 
 void default_interrupt_handler(registers_t *regs)
 {
-	PANIC("Fatal exception, system halted.");
+	PANIC("Fatal exception, system halted. EIP=0x%x", regs->eip);
 	__asm__ __volatile__("hlt");
 }
