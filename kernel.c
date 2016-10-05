@@ -13,11 +13,14 @@
 #include "mem/kmalloc.h"
 #include "mem/paging.h"
 #include "mem/liballoc/liballoc.h"
+#include "console/console.h"
+#include "fs/ramdisk.h"
 
 extern uintptr_t end; // Defined in linker script
 uintptr_t kernel_end = 0;
 uint32_t initial_esp;
 multiboot_elf_section_header_table_t copied_elf_header;
+vfs_dir_t *fs_root;
 
 void kmain(struct multiboot *mboot_ptr, unsigned int initial_stack)
 {
@@ -103,9 +106,32 @@ void kmain(struct multiboot *mboot_ptr, unsigned int initial_stack)
 	debug("Allocate block at 0x%x and 0x%x. Values: (%x, %x), Phys (0x%x, 0x%x)\n", alloc1, alloc2, *alloc1, *alloc2, phys1, phys2);
 #endif
 
+	debug("Initializing RAMFS");
+	fs_root = ramdisk_init();
+	debug(" [ OK ]\n");
+
+#if 0
+	vfs_dirent_t *dev = vfs_read_dir(fs_root, 2);
+	if (dev) {
+		debug("Inode 2: %s%s\n", fs_root->fname, dev->fname);
+		uint8_t *buff = (uint8_t *)kmalloc(sizeof (uint8_t));
+		char *b2 = "TESTING123";
+		vfs_write(&dev->node, 0, sizeof(char) * 11, b2);
+		vfs_read(&dev->node, 0, 32, buff);
+		debug("\tContents: %s\n", buff);
+	} else {
+		debug("Could not find /dev!\n");
+	}
+#endif
+
 	debug("Init timer\n");
 	init_timer(50);
 	debug("Timer enabled\n");
+
+	console_init();
+
+	kprintf("Reached end of control, system stopped.\n");
+
 	char *buf = "";
 
 	while (1) {

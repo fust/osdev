@@ -1,11 +1,11 @@
 INCLUDES = ./include
 
 CC	= i686-elf-gcc
-CFLAGS	= -Wall -Wextra -Wno-unused-value -Wno-unused-variable -nostdlib -fno-builtin -nostartfiles -nodefaultlibs -m32 -std=gnu99 -I $(INCLUDES)
+CFLAGS	= -Wall -Wextra -Wno-unused-value -Wno-unused-variable -nostdlib -fno-builtin -fms-extensions -nostartfiles -nodefaultlibs -m32 -std=gnu99 -I $(INCLUDES)
 LD	= i686-elf-ld
 
  
-OBJFILES =  mem/liballoc/liballoc.o mem/kheap.o mem/paging.o mem/pmm.o sys/bitmap.o mem/kmalloc.o stdio/kprintf.o debug/debug.o timer.o interrupts.o idt.o gdt.o asm/interrupts.o io.o video/video.o stdlib.o string.o boot.o kernel.o
+OBJFILES =  console/console.o fs/ramdisk.o fs/vfs.o mem/liballoc/liballoc.o mem/kheap.o mem/paging.o mem/pmm.o sys/bitmap.o mem/kmalloc.o stdio/kprintf.o debug/debug.o timer.o interrupts.o idt.o gdt.o asm/interrupts.o io.o video/video.o stdlib.o string.o boot.o kernel.o
  
 all: kernel.img
  
