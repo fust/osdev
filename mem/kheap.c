@@ -19,7 +19,9 @@ void *sbrk(uintptr_t size)
 {
 	uintptr_t sz = size * 0x1000;
 
+#if 0
 	debug("SBRK: st: 0x%x, end: 0x%x, sz: 0x%x, req: %d (0x%x)\n", (uintptr_t) heap_start, heap_end, heap_size, size, sz);
+#endif
 	ASSERT((heap_end - (uintptr_t) heap_start) + sz < heap_size, "Tried to allocate beyond end of heap!");
 
 	uintptr_t *address = (uintptr_t*)heap_end;
