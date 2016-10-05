@@ -4,10 +4,12 @@
 
 extern unsigned short *VIDEO_MEM;
 
-extern void puts(const char c);
+void puts(const char c);
 
-extern void cls();
+void cls();
 
-extern void write_at(char *string, uint8_t x, uint8_t y);
+void write_at(char *string, uint8_t x, uint8_t y);
+
+void update_cursor(int row, int col);
 
 #endif

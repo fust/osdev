@@ -2,6 +2,7 @@
 #include "stdlib.h"
 #include "string.h"
 #include "stdio.h"
+#include "io.h"
 
 unsigned short *VIDEO_MEM = (unsigned short *)0xB8000;
 
@@ -48,6 +49,8 @@ void puts(const char c )
 
 	// Update cursor location
 	cursor_x++;
+
+	update_cursor(cursor_y, cursor_x);
 }
 
 void cls()
@@ -82,4 +85,19 @@ void write_at(char *string, uint8_t x, uint8_t y)
 
 	cursor_x = orig_x;
 	cursor_y = orig_y;
+}
+
+/* void update_cursor(int row, int col)
+ * by Dark Fiber
+ */
+void update_cursor(int row, int col)
+{
+	unsigned short position = (row * 80) + col;
+
+    // cursor LOW port to vga INDEX register
+    outb(0x3D4, 0x0F);
+    outb(0x3D5, (unsigned char)(position & 0xFF));
+    // cursor HIGH port to vga INDEX register
+    outb(0x3D4, 0x0E);
+    outb(0x3D5, (unsigned char )((position >> 8) & 0xFF));
 }
