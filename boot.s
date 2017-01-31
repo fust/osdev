@@ -5,10 +5,11 @@
 
 MBOOT_PAGE_ALIGN    equ 1<<0    ; Load kernel and modules on a page boundary
 MBOOT_MEM_INFO      equ 1<<1    ; Provide your kernel with memory info
+MBOOT_VID_MOD       equ 1<<2    ; Information about the video mode table must be available to the kernel
 MBOOT_HEADER_MAGIC  equ 0x1BADB002 ; Multiboot Magic value
 ; NOTE: We do not use MBOOT_AOUT_KLUDGE. It means that GRUB does not
 ; pass us a symbol table.
-MBOOT_HEADER_FLAGS  equ MBOOT_PAGE_ALIGN | MBOOT_MEM_INFO
+MBOOT_HEADER_FLAGS  equ MBOOT_PAGE_ALIGN | MBOOT_MEM_INFO | MBOOT_VID_MOD
 MBOOT_CHECKSUM      equ -(MBOOT_HEADER_MAGIC + MBOOT_HEADER_FLAGS)
 
 
@@ -30,9 +31,9 @@ mboot:
     dd  start                   ; Kernel entry point (initial EIP).
 
 section .bootstrap_stack
-align 4
+align 16
 stack_bottom:
-times 16384 db 0
+times 32768 db 0		; 32KB stack
 stack_top:
 
 [GLOBAL start]                  ; Kernel entry point.
@@ -42,7 +43,8 @@ stack_top:
 [EXTERN kmain]                   ; This is the entry point of our C code
 
 start:
-    mov esp, stack_top
+    mov esp, stack_bottom
+    and esp, $-16
     ; Load multiboot information:
     push esp
     push ebx

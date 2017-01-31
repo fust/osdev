@@ -1,11 +1,15 @@
 #ifndef __SPINLOCK_H
 #define __SPINLOCK_H
 
-static void spin_lock(int volatile * lock) {
-	while (!__sync_bool_compare_and_swap(lock, 0, 1));
+#include "stdint.h"
+
+typedef uint8_t volatile spinlock_t;
+
+static void spin_lock(uint8_t volatile * lock) {
+	while (__sync_lock_test_and_set(lock, 0x01));
 }
 
-static void spin_unlock(int volatile * lock) {
+static void spin_unlock(uint8_t volatile * lock) {
 	__sync_lock_release(lock);
 }
 

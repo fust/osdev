@@ -20,11 +20,15 @@ uint32_t pmm_free_frames()
 	return frames - used_frames;
 }
 
+uint32_t pmm_used_frames()
+{
+	return used_frames;
+}
+
 void pmm_set_kernel_end(uint32_t kernel_end)
 {
-	debug("PMM: Kerel's end is at 0x%x\n", placement_pointer);
-
 	placement_pointer = kernel_end;
+	debug("PMM: Kerel's end is at 0x%x\n", placement_pointer);
 }
 
 void pmm_init(uint32_t mem_size)

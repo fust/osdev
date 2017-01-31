@@ -15,6 +15,15 @@
 #include "mem/liballoc/liballoc.h"
 #include "console/console.h"
 #include "fs/ramdisk.h"
+#include "dev/ps2.h"
+#include "dev/kbd.h"
+#include "sys/pipe.h"
+#include "dev/pci.h"
+#include "dev/ata.h"
+
+#if 1
+extern pipe_t *kbd_pipe;
+#endif
 
 extern uintptr_t end; // Defined in linker script
 uintptr_t kernel_end = 0;
@@ -44,7 +53,6 @@ void kmain(struct multiboot *mboot_ptr, unsigned int initial_stack)
 
 	if (mboot_ptr->flags & MULTIBOOT_FLAG_MMAP) {
 		debug("Found a memory map (Thanks, %s!): 0x%x with length %d (%d items)\n", mboot_ptr->boot_loader_name, mboot_ptr->mmap_addr, mboot_ptr->mmap_length, mboot_ptr->mmap_length / sizeof(mboot_memmap_t));
-
 		mboot_memmap_t* mmap = mboot_ptr->mmap_addr;
 		while(mmap < mboot_ptr->mmap_addr + mboot_ptr->mmap_length) {
 			mmap = (mboot_memmap_t*) ( (unsigned int)mmap + mmap->size + sizeof(mmap->size) );
@@ -65,7 +73,7 @@ void kmain(struct multiboot *mboot_ptr, unsigned int initial_stack)
 	}
 
 	kprintf("OS loading...\n");
-	debug("Stack is at %x.\n", initial_esp);
+	debug("Stack is at 0x%x.\n", initial_esp);
 
 	kprintf("Loading GDT...");
 	debug("Loading GDT\n");
@@ -89,9 +97,9 @@ void kmain(struct multiboot *mboot_ptr, unsigned int initial_stack)
 	pmm_init(mem_max);
 	kprintf(" [ OK ]\n");
 
-	debug("Initializing paging...");
+	kprintf("Initializing paging...");
 	paging_init();
-	debug(" [ OK ]\n");
+	kprintf(" [ OK ]\n");
 
 #if 0
 	// This will be used for testing once the kernel heap allocator is done.
@@ -106,9 +114,17 @@ void kmain(struct multiboot *mboot_ptr, unsigned int initial_stack)
 	debug("Allocate block at 0x%x and 0x%x. Values: (%x, %x), Phys (0x%x, 0x%x)\n", alloc1, alloc2, *alloc1, *alloc2, phys1, phys2);
 #endif
 
-	debug("Initializing RAMFS");
+	kprintf("Initializing VFS");
+	vfs_install();
+	kprintf(" [ OK ]\n");
+
+	kprintf("Initializing RAMFS");
 	fs_root = ramdisk_init();
-	debug(" [ OK ]\n");
+	kprintf(" [ OK ]\n");
+
+	kprintf("Initializing (P/S)ATA devices");
+	ata_init();
+	kprintf(" [ OK ]\n");
 
 #if 0
 	vfs_dirent_t *dev = vfs_read_dir(fs_root, 2);
@@ -124,19 +140,27 @@ void kmain(struct multiboot *mboot_ptr, unsigned int initial_stack)
 	}
 #endif
 
-	debug("Init timer\n");
+	kprintf("Init timer");
 	init_timer(50);
-	debug("Timer enabled\n");
+	kprintf(" [ OK ]\n");
 
-	console_init();
+	kprintf("Init PS/2");
+	ps2_init();
+	kprintf(" [ OK ]\n");
 
-	kprintf("Reached end of control, system stopped.\n");
+	kprintf("Init keyboard");
+	ps2_dev_t kbd;
+	kbd.handler = &keyboard_interrupt;
+	ps2_register_device_driver(kbd, 0, &keyboard_init);
+	kprintf(" [ OK ]\n");
 
-	char *buf = "";
+	debug_print_vfs_tree();
+
+	console_run();
+
+	//kprintf("Reached end of control, system stopped.\n");
 
 	while (1) {
-		itoa(get_timer_ticks(), buf, 10);
-		write_at(buf, 1, 23);
 		__asm__ __volatile__("hlt");
 	}
 

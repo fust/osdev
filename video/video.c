@@ -16,11 +16,21 @@ void puts(const char c )
 	if (c == '\n') {
 		cursor_x = 0;
 		cursor_y++;
+		update_cursor(cursor_y, cursor_x);
 		return;
 	}
 
 	if (c == '\t') {
 		cursor_x += 4;
+		update_cursor(cursor_y, cursor_x);
+		return;
+	}
+
+	if (c == '\b') {
+		cursor_x--;
+		uint16_t *location = VIDEO_MEM + (cursor_y * 80 + cursor_x);
+		memset(location, (' ' | (attribute << 8)), sizeof(uint8_t));
+		update_cursor(cursor_y, cursor_x);
 		return;
 	}
 
@@ -30,22 +40,23 @@ void puts(const char c )
 		cursor_x = 0;
 	}
 
-	if (cursor_y > 25) {
+	if (cursor_y > 24) {
 		// Scrolling
-		for (size_t i = 1; i <= 25; i++) {
-			uint16_t *loc = VIDEO_MEM + (i * 80);
-			uint16_t *dst = VIDEO_MEM + ((i - 1) * 80);
-			memcpy(loc, dst, sizeof(char) * 80);
+		for (size_t i = 1; i < 25; i++) { // Start at line 1 and copy one line up
+			uint32_t *loc = VIDEO_MEM + (i * 80);
+			uint32_t *dst = VIDEO_MEM + ((i - 1) * 80);
+			memcpy(dst, loc, (sizeof(uint16_t) * 80));
 		}
-		cursor_y = 0;
+		memset((VIDEO_MEM + (24 * 80)), 0x0, (sizeof(uint16_t) * 80));
+		cursor_y = 24;
 	}
 
 	// Calculate the position
 	uint16_t *location = VIDEO_MEM + (cursor_y * 80 + cursor_x);
 
 	// Write the actual character
-	memset(location, (c | (attribute << 8)), sizeof(char));
-	//*location = c | (attribute << 8);
+	//memset(location, (c | (attribute << 8)), sizeof(uint8_t));
+	*location = c | (attribute << 8);
 
 	// Update cursor location
 	cursor_x++;

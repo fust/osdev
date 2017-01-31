@@ -27,4 +27,6 @@ uint32_t ramdisk_write(vfs_node_t *node, uint32_t offset, uint32_t size, uint8_t
 
 vfs_dirent_t *ramdisk_read_dir (vfs_dir_t *dir, uint32_t inode);
 
+vfs_dirent_t *ramdisk_find_dir (vfs_dir_t *dir, char *fname);
+
 #endif

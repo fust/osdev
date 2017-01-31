@@ -6,4 +6,6 @@ void init_timer(uint32_t frequency);
 
 uint32_t get_timer_ticks();
 
+void sleep(int milliseconds);
+
 #endif

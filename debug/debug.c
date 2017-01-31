@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include "mem/kmalloc.h"
 
+uint8_t panicing = 0;
+
 static struct {
 	struct symbol *symbols;
 	int count;

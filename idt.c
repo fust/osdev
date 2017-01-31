@@ -122,10 +122,10 @@ void irq_handler(registers_t regs)
 	{
 		isr_t handler = interrupt_handlers[regs.int_no];
 		handler(regs);
-	}
-
-	if (regs.int_no > 33) {
-		PANIC("Invalid IRQ received: %d\n", regs.int_no);
-		__asm__ __volatile__ ("hlt");
+	} else {
+	/*	if (regs.int_no >= 32) {
+			PANIC("Invalid IRQ received: %d\n", regs.int_no);
+			__asm__ __volatile__ ("hlt");
+		}*/
 	}
 }

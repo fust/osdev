@@ -1,4 +1,5 @@
 #include "string.h"
+#include "mem/kmalloc.h"
 
 void *memset(void *str, char c, size_t n)
 {
@@ -33,4 +34,50 @@ char *strcpy (char *destination, const char *source)
 	}
 
 	return destination;
+}
+
+int strlen(const char *str)
+{
+	register const char *s;
+
+	for (s = str; *s; s++);
+	return (s - str);
+}
+
+char *strdup(const char *str)
+{
+	size_t l = strlen(str);
+	return memcpy(kmalloc(l+1), str, l+1);
+}
+
+size_t strspn(const char *str, const char *accept) {
+	const char *ptr = str;
+	const char *acc;
+
+	while (*str) {
+		for (acc = accept; *acc; ++acc) {
+			if (*str == *acc) {
+				break;
+			}
+		}
+		if (*acc == '\0') {
+			break;
+		}
+
+		str++;
+	}
+
+	return str - ptr;
+}
+
+char *strchr (char *str, int character) {
+
+	do {
+		if (*str == character) {
+			return (char *)str;
+		}
+	}
+	while (*str++);
+
+	return 0;
 }

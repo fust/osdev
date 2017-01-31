@@ -30,8 +30,14 @@ void map_page(page_t *page, int is_writable, int is_kernel);
 
 page_t *get_page(uintptr_t address, int make, page_directory_t * dir);
 
+uintptr_t virt_to_phys(uintptr_t virt);
+
 void switch_page_directory(page_directory_t * dir);
 
 void page_fault(registers_t regs);
+
+void invalidate_page_tables(void);
+
+void debug_dump_pgdir(page_directory_t *dir);
 
 #endif

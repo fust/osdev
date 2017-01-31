@@ -29,3 +29,11 @@ uint32_t get_timer_ticks()
 {
 	return ticks;
 }
+
+void sleep(int milliseconds)
+{
+	uint32_t cur = get_timer_ticks();
+	while ((cur + milliseconds) > get_timer_ticks()) {
+		__asm__ __volatile__ ("hlt");
+	}
+}

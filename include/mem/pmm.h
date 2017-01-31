@@ -8,6 +8,8 @@ uint32_t pmm_num_frames();
 
 uint32_t pmm_free_frames();
 
+uint32_t pmm_used_frames();
+
 void pmm_set_kernel_end(uint32_t kernel_end);
 
 void pmm_init(uint32_t mem_size);

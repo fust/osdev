@@ -10,4 +10,12 @@ int strcmp(const char * str1, const char *str2);
 
 char *strcpy (char *destination, const char *source);
 
+int strlen(const char *str);
+
+char *strdup(const char *str);
+
+size_t strspn(const char * str, const char * accept);
+
+char *strchr (char *str, int character);
+
 #endif

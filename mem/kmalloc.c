@@ -4,6 +4,7 @@
 #include "stdint.h"
 #include "string.h"
 #include "sys/bitmap.h"
+#include "mem/paging.h"
 #include "debug.h"
 
 extern uint32_t placement_pointer; // Defined in pmm.c
@@ -16,7 +17,7 @@ uintptr_t *kmalloc_int(uint32_t size, uint32_t align, uintptr_t *phys)
 		return NULL;
 	}
 
-	if (!pmm_map) { // No physical memory management yet, use the dump allocator
+	if (!pmm_map) { // No physical memory management yet, use the dumb allocator
 		if (align) {
 			placement_pointer &= 0xFFFFF000;
 			placement_pointer += 0x1000;
@@ -39,15 +40,19 @@ uintptr_t *kmalloc_int(uint32_t size, uint32_t align, uintptr_t *phys)
 		uintptr_t *address = pmm_alloc_n(blocks);
 
 		if (phys) {
-			*phys = (uint32_t) address;
+			*phys = address;
 		}
+		placement_pointer = (uint32_t)(bitmap_first_free(pmm_map) * 0x1000);
 		return address;
 	} else if (heap_end) { // Virtual memory is enabled, pass through to liballoc
-		uintptr_t *address = (uintptr_t *)malloc(size);
+		uintptr_t *address = (uintptr_t *)lmalloc(size);
 
+		//debug("KMALLOC: Allocated %d bytes at virt 0x%x", size, address);
 		if (phys) {
-			// *phys = virtual_to_physical(address);
+			 *phys = virt_to_phys(address);
+			 //debug(" phys 0x%x", phys);
 		}
+		//debug("\n");
 		return address;
 	}
 
@@ -76,7 +81,9 @@ uintptr_t *kmalloc_ap(uint32_t size, uintptr_t *phys)
 
 void kfree(void *p)
 {
-	if (pmm_map) {
+	if (pmm_map && !heap_end) {
 		pmm_free((uintptr_t *) p);
+	} else if (heap_end) {
+		lfree(p);
 	}
 }

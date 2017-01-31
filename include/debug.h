@@ -6,8 +6,13 @@
 #include <multiboot.h>
 #include <stdio.h>
 #include <cpu.h>
+#include <video.h>
+#include <mem/paging.h>
 
 #define BOCHS_BREAK() { asm volatile ("xchgw %bx, %bx"); }
+
+extern page_directory_t *current_directory;
+extern uint8_t panicing;
 
 struct symbol {
 	uint32_t *start;
@@ -29,10 +34,19 @@ void debug(char * format, ...);
 void do_backtrace(registers_t * regs);
 
 #define PANIC(format, ...) do { \
+	cls(); \
+	__asm__ volatile ("cli"); \
 	kprintf("PANIC: "); \
 	debug("PANIC: "); \
 	kprintf(format, ##__VA_ARGS__); \
+	kprintf("\n"); \
 	debug(format, ##__VA_ARGS__); \
+	backtrace_now(); \
+	if (panicing == 1) { \
+		__asm__ volatile("ud2"); \
+	} \
+	panicing = 1; \
+	/*debug_dump_pgdir(current_directory); */\
 	__asm__ volatile("ud2"); \
 } while (0)
 
