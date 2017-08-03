@@ -23,7 +23,6 @@ gdt_flush:
 %macro ISR_NOERRCODE 1
 	[GLOBAL isr%1]
 	isr%1:
-		cli
 		push byte 0
 		push byte %1
 		jmp isr_common
@@ -32,7 +31,6 @@ gdt_flush:
 %macro ISR_ERRCODE 1
 	[GLOBAL isr%1]
 	isr%1:
-		cli
 		push byte %1
 		jmp isr_common
 %endmacro
@@ -40,7 +38,6 @@ gdt_flush:
 %macro IRQ 2
   global irq%1
   irq%1:
-    cli
     push byte 0
     push byte %2
     jmp irq_common_stub

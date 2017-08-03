@@ -30,6 +30,6 @@ typedef struct page_directory {
 
 void paging_init();
 
-void pagefault(registers_t regs);
+void pagefault(registers_t *regs);
 
 #endif

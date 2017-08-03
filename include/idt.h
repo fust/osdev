@@ -37,7 +37,7 @@ struct idt_ptr {
 } __attribute__ ((packed));
 typedef struct idt_ptr idt_ptr_t;
 
-typedef void (*isr_t)(registers_t);
+typedef void (*isr_t)(registers_t *);
 
 // Interrupt service routines
 extern void isr0();
