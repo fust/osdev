@@ -1,70 +1,45 @@
 #include "mem/kheap.h"
-#include "stdint.h"
-#include "mem/paging.h"
-#include "string.h"
-#include "spinlock.h"
+#include "sys/bitmap.h"
+#include "stddef.h"
 #include "debug.h"
 
-uintptr_t *heap_start;
-uintptr_t heap_end = NULL;
-uint32_t heap_size = 0x1000000;
-uintptr_t heap_ptr;
+uint32_t heap_enabled = 0;
+bitmap_t *map;
 
-extern page_directory_t *current_directory;
+uint32_t KERNEL_HEAP_SIZE = 0xA00000; // 10MB
+uint32_t HEAP_OFFSET = 0x500000; // 5MB
 
-spinlock_t liballoc_slock;
-
-void heap_install (uintptr_t *end)
+void heap_install(bitmap_t *bitmap)
 {
-	heap_end = (uintptr_t) end;
+	map = bitmap;
+	heap_enabled = 1;
 }
 
-void *sbrk(uintptr_t size)
+void *heap_sbrk(uint32_t num_pages)
 {
-	uintptr_t sz = size * 0x1000;
+	debug("[HEAP] Will try to allocate %d page(s) of memory\n", num_pages);
+	uint32_t free = bitmap_first_n_free(map, num_pages);
 
-	debug("SBRK: st: 0x%x, end: 0x%x, sz: 0x%x, req: %d (0x%x)\n", (uintptr_t) heap_start, heap_end, heap_size, size, sz);
-	ASSERT((heap_end + sz) < heap_size, "Tried to allocate beyond end of heap!");
-
-	uintptr_t address = heap_end;
-
-	if (heap_end + sz > heap_ptr) {
-		debug("\tSBRK: End of kernel heap, allocating more (we're at 0x%x and want to be at 0x%x)\n", heap_end, heap_end + sz);
-		for (uintptr_t i = heap_end; i < heap_end + sz; i += 0x1000) {
-			map_page(get_page(i, 0, current_directory), 1, 0);
-		}
-
-		invalidate_page_tables();
+	if (free == (uint32_t) -1) {
+		return NULL;
 	}
 
-	heap_end += sz;
-	memset((void *)address, 0, sz);
+	for (uint32_t i = 0; i < num_pages; i++) {
+		bitmap_set(map, free + i);
+	}
 
-	debug("SBRK: Done. Mapped at: 0x%x\n", address);
-	debug("SBRK: Memory usage : %dKB of %dKB\n", (pmm_used_frames() * 0x1000) / 1024, (pmm_num_frames() * 0x1000) / 1024);
+	debug("[HEAP] The start address of the new page(s) is: 0x%x\n", (free * 0x1000 + HEAP_OFFSET));
 
-	return (void *)address;
+	return (void*) (free * 0x1000 + HEAP_OFFSET);
 }
 
-int liballoc_lock()
+uint32_t heap_free(void* address, uint32_t size)
 {
-	spin_lock(&liballoc_slock);
+	uint32_t i = ((uint32_t) address - HEAP_OFFSET) / 0x1000;
+
+	for (; i < size; i++) {
+		bitmap_clear(map, (bitmap_index_t) i);
+	}
+
 	return 0;
-}
-
-int liballoc_unlock()
-{
-	spin_unlock(&liballoc_slock);
-	return 0;
-}
-
-void* liballoc_alloc(int size)
-{
-	return sbrk((uintptr_t) size);
-}
-
-int liballoc_free(void* ptr,int sz)
-{
-	debug("LIBALLOC_FREE: 0x%x - 0x%x\n", ptr, ((int) ptr) + sz);
-	return 0; // We'll worry about this later
 }

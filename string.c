@@ -1,10 +1,15 @@
 #include "string.h"
 #include "mem/kmalloc.h"
+#include "debug.h"
 
 void *memset(void *str, char c, size_t n)
 {
-	uint8_t *s = (uint8_t *)str;
-	for( ; n != 0; n--, s[n] = c);
+	debug("MEMSET: 0x%x to %c with length 0x%x\n", str, c, n);
+	asm volatile("cld; rep stosb"
+				 : "=c"((int){0})
+				 : "D"(str), "a"(c), "c"(n)
+				 : "flags", "memory");
+	debug("MEMSET: done.\n");
 	return str;
 }
 

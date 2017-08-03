@@ -1,4 +1,4 @@
-#include "stdint.h"
+#include <stdint.h>
 
 #ifndef __MULTIBOOT_H
 #define __MULTIBOOT_H
@@ -74,8 +74,10 @@ typedef struct multiboot_header multiboot_header_t;
 
 typedef struct {
 	uint32_t size;
-	uint64_t base_addr;
-	uint64_t length;
+	uint32_t base_addr_low;
+	uint32_t base_addr_high;
+	uint32_t length_low;
+	uint32_t length_high;
 	uint32_t type;
 } __attribute__ ((packed)) mboot_memmap_t;
 

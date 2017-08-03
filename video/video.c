@@ -3,6 +3,7 @@
 #include "string.h"
 #include "stdio.h"
 #include "io.h"
+#include "framebuffer.h"
 
 unsigned short *VIDEO_MEM = (unsigned short *)0xB8000;
 
@@ -10,6 +11,11 @@ uint8_t cursor_x, cursor_y = 0;
 
 void puts(const char c )
 {
+	if (framebuffer_enabled()) {
+		framebuffer_write_char(c);
+		return;
+	}
+
 	// Create attribute byte
 	uint8_t attribute = (0 << 4) | (15 & 0x0F);
 

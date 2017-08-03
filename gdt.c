@@ -1,5 +1,7 @@
 #include "gdt.h"
 #include "video.h"
+#include <stdint.h>
+#include "debug.h"
 
 extern void gdt_flush(uint32_t);
 
@@ -18,6 +20,7 @@ void init_gdt()
 	gdt_set_gate(2, 0x00000000, 0xFFFFFFFF, 0x92, 0xCF);
 	gdt_set_gate(3, 0x00000000, 0xFFFFFFFF, 0xFA, 0xCF);
 	gdt_set_gate(4, 0x00000000, 0xFFFFFFFF, 0xF2, 0xCF);
+	debug("Loading GDT at 0x%x", (uint32_t)&gdt);
 
 	gdt_flush((uint32_t)&gdt);
 }

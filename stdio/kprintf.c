@@ -39,6 +39,7 @@ void kprintf(char * format, ...)
 					kprintf(s);
 					break;
 				case 'd':
+				case 'i':
 					num = va_arg(argptr, int);
 					itoa(num, s, 10);
 					kprintf(s);

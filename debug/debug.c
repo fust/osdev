@@ -7,7 +7,6 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
-#include "mem/kmalloc.h"
 
 uint8_t panicing = 0;
 
@@ -218,6 +217,7 @@ void debug(char * format, ...)
 					debug(s);
 					break;
 				case 'd':
+				case 'i':
 					num = va_arg(argptr, int);
 					itoa(num, s, 10);
 					debug(s);

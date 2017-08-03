@@ -20,9 +20,15 @@ bitmap_t * bitmap_create(uint32_t num_indices)
 		return NULL;
 	}
 
-	memset(b, 0, (size_t) (sizeof(bitmap_t) + (num_indices / BYTE_SIZE)));
-	b->map = (uintptr_t *)b + sizeof(bitmap_t);
 	b->num_bytes = num_indices / BYTE_SIZE;
+	uintptr_t *map = (uintptr_t *)(b + sizeof(bitmap_t));
+
+	memset(map, 0, (size_t) b->num_bytes);
+
+/*	for (uint16_t i = 0; i <= b->num_bytes; i++) {
+		map[i] = 0;
+	}*/
+	b->map = map;
 
 	return b;
 }
@@ -32,7 +38,10 @@ bitmap_t * bitmap_create(uint32_t num_indices)
  */
 void bitmap_set(bitmap_t * bitmap, bitmap_index_t index)
 {
-	bitmap->map[index / BYTE_SIZE] |= 1 << (index % 32);
+	if (index / BYTE_SIZE > bitmap->num_bytes) {
+		return;
+	}
+	bitmap->map[index / BYTE_SIZE] |= 1 << (index % BYTE_SIZE);
 }
 
 /**
@@ -40,7 +49,7 @@ void bitmap_set(bitmap_t * bitmap, bitmap_index_t index)
  */
 void bitmap_clear(bitmap_t * bitmap, bitmap_index_t index)
 {
-	bitmap->map[index / BYTE_SIZE] &= ~ (1 << (index % 32));
+	bitmap->map[index / BYTE_SIZE] &= ~ (1 << (index % BYTE_SIZE));
 }
 
 /**
@@ -48,7 +57,7 @@ void bitmap_clear(bitmap_t * bitmap, bitmap_index_t index)
  */
 bool bitmap_test(bitmap_t * bitmap, bitmap_index_t index)
 {
-	return (bitmap->map[index / BYTE_SIZE] & (1 << (index % 32))) == 1 ? true : false;
+	return (bitmap->map[index / BYTE_SIZE] & (1 << (index % BYTE_SIZE))) == 1 ? true : false;
 }
 
 /**

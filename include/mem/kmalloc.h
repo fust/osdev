@@ -1,16 +1,14 @@
 #ifndef __KMALLOC_H
 #define __KMALLOC_H
 
-#include "stdint.h"
+#include <stdint.h>
+#include "mem/liballoc.h"
 
-uintptr_t *kmalloc(uint32_t size);
+uint32_t kmalloc(uint32_t size);
+uint32_t kmalloc_a(uint32_t size);
+uint32_t kmalloc_p(uint32_t size, uint32_t *phys);
+uint32_t kmalloc_ap(uint32_t size, uint32_t *phys);
 
-uintptr_t *kmalloc_a(uint32_t size);
-
-uintptr_t *kmalloc_p(uint32_t size, uintptr_t *phys);
-
-uintptr_t *kmalloc_ap(uint32_t size, uintptr_t *phys);
-
-void kfree(void *p);
+uint32_t kfree(uint32_t *address);
 
 #endif

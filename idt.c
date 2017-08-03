@@ -107,6 +107,8 @@ void isr_handler(registers_t regs)
 	{
 		isr_t handler = interrupt_handlers[regs.int_no];
 		handler(regs);
+	} else if (regs.int_no != 6) {
+		PANIC("Unhandled exception: %d: %s\n", regs.int_no, irq_messages[regs.int_no]);
 	}
 }
 
@@ -123,6 +125,7 @@ void irq_handler(registers_t regs)
 		isr_t handler = interrupt_handlers[regs.int_no];
 		handler(regs);
 	} else {
+		debug("Unhandled interrupt received: %d\n", regs.int_no);
 	/*	if (regs.int_no >= 32) {
 			PANIC("Invalid IRQ received: %d\n", regs.int_no);
 			__asm__ __volatile__ ("hlt");

@@ -7,11 +7,9 @@
 #include <stdio.h>
 #include <cpu.h>
 #include <video.h>
-#include <mem/paging.h>
 
 #define BOCHS_BREAK() { asm volatile ("xchgw %bx, %bx"); }
 
-extern page_directory_t *current_directory;
 extern uint8_t panicing;
 
 struct symbol {

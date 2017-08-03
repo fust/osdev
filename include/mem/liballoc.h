@@ -10,6 +10,7 @@
 
 /** @{ */
 
+#include <stdint.h>
 #include "stddef.h"
 
 // If we are told to not define our own size_t, then we skip the define.
@@ -17,12 +18,13 @@
 //typedef	unsigned long	uintptr_t;
 
 //This lets you prefix malloc and friends
-#define PREFIX(func)		l ## func
+#define PREFIX(func)		kl ## func
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#define DEBUG
 
 
 /** This function is supposed to lock the memory data structures. It

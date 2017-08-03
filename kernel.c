@@ -2,34 +2,21 @@
 #include "video.h"
 #include "gdt.h"
 #include "idt.h"
-#include "mem/pmm.h"
-#include "interrupts.h"
 #include "timer.h"
-#include "stddef.h"
-#include "elf.h"
 #include "debug.h"
-#include "stdio.h"
-#include "stdlib.h"
-#include "mem/kmalloc.h"
+#include "mem/pmm.h"
 #include "mem/paging.h"
-#include "mem/liballoc/liballoc.h"
-#include "console/console.h"
-#include "fs/ramdisk.h"
-#include "dev/ps2.h"
-#include "dev/kbd.h"
-#include "sys/pipe.h"
-#include "dev/pci.h"
-#include "dev/ata.h"
-
-#if 1
-extern pipe_t *kbd_pipe;
-#endif
+#include "interrupts.h"
+#include <stddef.h>
+#include "stdio.h"
+#include <stdlib.h>
+#include "vbe.h"
+#include "framebuffer.h"
 
 extern uintptr_t end; // Defined in linker script
 uintptr_t kernel_end = 0;
 uint32_t initial_esp;
 multiboot_elf_section_header_table_t copied_elf_header;
-vfs_dir_t *fs_root;
 
 void kmain(struct multiboot *mboot_ptr, unsigned int initial_stack)
 {
@@ -49,27 +36,20 @@ void kmain(struct multiboot *mboot_ptr, unsigned int initial_stack)
 	}
 	// Mem_max is now either 0 or the memory size in bytes
 
-	cls();
+	debug("Got our basic info:\n");
+	debug("\tKernel end: 0x%x\n", kernel_end);
+	debug("\tInitial ESP: 0x%x\n", initial_esp);
+	debug("\tMemory size: %d MB\n", (mem_max / 1024) / 1024);
 
-	if (mboot_ptr->flags & MULTIBOOT_FLAG_MMAP) {
-		debug("Found a memory map (Thanks, %s!): 0x%x with length %d (%d items)\n", mboot_ptr->boot_loader_name, mboot_ptr->mmap_addr, mboot_ptr->mmap_length, mboot_ptr->mmap_length / sizeof(mboot_memmap_t));
-		mboot_memmap_t* mmap = mboot_ptr->mmap_addr;
-		while(mmap < mboot_ptr->mmap_addr + mboot_ptr->mmap_length) {
-			mmap = (mboot_memmap_t*) ( (unsigned int)mmap + mmap->size + sizeof(mmap->size) );
-			debug("\tFound memory region: 0x%x length: 0x%x type: %x.\n", mmap->base_addr, mmap->length, mmap->type);
-		}
-	}
+	if (mboot_ptr->flags | 0x400) {
+		debug("\tvbe_control_info: %x\n", mboot_ptr->vbe_control_info);
+		debug("\tvbe_mode_info: %x\n", mboot_ptr->vbe_mode_info);
+		debug("\tvbe_mode: %x\n", mboot_ptr->vbe_mode);
 
-	if (mboot_ptr->flags & MULTIBOOT_INFO_ELF_SHDR) {
-		if (mboot_ptr->u.elf_sec.size == sizeof(Elf32_Shdr)) {
-			copied_elf_header = mboot_ptr->u.elf_sec;
-		} else {
-			kprintf("ELF header size mismatch! Will not load symbol table.\n");
-		}
-	}
-
-	if (&copied_elf_header) {
-		debug_init(&copied_elf_header);
+		vbe_mode_info_t *modeinfo = (vbe_mode_info_t *) mboot_ptr->vbe_mode_info;
+		framebuffer_init(modeinfo);
+	} else {
+		cls();
 	}
 
 	kprintf("OS loading...\n");
@@ -93,76 +73,64 @@ void kmain(struct multiboot *mboot_ptr, unsigned int initial_stack)
 	debug("Interrupts enabled\n");
 
 	kprintf("Interrupts enabled...\n");
-	kprintf("Initializing PMM with %d MB of memory...", (mem_max / 1024) / 1024);
-	pmm_init(mem_max);
-	kprintf(" [ OK ]\n");
 
-	kprintf("Initializing paging...");
-	paging_init();
-	kprintf(" [ OK ]\n");
+	init_timer(1000);
+	debug("Timer enabled.\n");
 
-#if 0
-	// This will be used for testing once the kernel heap allocator is done.
-	uint32_t phys1;
-	uint32_t phys2;
-	uint32_t *alloc1 = (uint32_t *)kmalloc_p(sizeof(uint32_t), (uintptr_t *)(&phys1));
-	uint32_t *alloc2 = (uint32_t *)kmalloc_p(sizeof(uint32_t), (uintptr_t *)(&phys2));
-	debug("Allocated...\n");
+	uint32_t memsize = 0x0;
 
-	*alloc1 = 0x1000;
-	*alloc2 = 0x1000;
-	debug("Allocate block at 0x%x and 0x%x. Values: (%x, %x), Phys (0x%x, 0x%x)\n", alloc1, alloc2, *alloc1, *alloc2, phys1, phys2);
-#endif
+	if (mboot_ptr->flags & MULTIBOOT_FLAG_MMAP) {
+		debug("Found a memory map (Thanks, %s!): 0x%x with length %d (%d items)\n", mboot_ptr->boot_loader_name, mboot_ptr->mmap_addr, mboot_ptr->mmap_length, mboot_ptr->mmap_length / sizeof(mboot_memmap_t));
+		mboot_memmap_t* mmap = (mboot_memmap_t*)mboot_ptr->mmap_addr;
+		uint8_t idx = 0;
+		while(mmap < mboot_ptr->mmap_addr + mboot_ptr->mmap_length) {
 
-	kprintf("Initializing VFS");
-	vfs_install();
-	kprintf(" [ OK ]\n");
+			debug("\tChunk: 0x%d, Start: 0x%x\tEnd: 0x%x\tLength: 0x%x\tType: %x.\n", idx, mmap->base_addr_low, (mmap->base_addr_low + mmap->length_low), mmap->length_low, mmap->type);
 
-	kprintf("Initializing RAMFS");
-	fs_root = ramdisk_init();
-	kprintf(" [ OK ]\n");
+			if (mmap->type == 1) {
+				memsize += mmap->length_low;
+			}
 
-	kprintf("Initializing (P/S)ATA devices");
-	ata_init();
-	kprintf(" [ OK ]\n");
-
-#if 0
-	vfs_dirent_t *dev = vfs_read_dir(fs_root, 2);
-	if (dev) {
-		debug("Inode 2: %s%s\n", fs_root->fname, dev->fname);
-		uint8_t *buff = (uint8_t *)kmalloc(sizeof (uint8_t));
-		char *b2 = "TESTING123";
-		vfs_write(&dev->node, 0, sizeof(char) * 11, b2);
-		vfs_read(&dev->node, 0, 32, buff);
-		debug("\tContents: %s\n", buff);
-	} else {
-		debug("Could not find /dev!\n");
+			mmap = (mboot_memmap_t*) ( (uint32_t)mmap + mmap->size + sizeof(uint32_t) );
+			idx++;
+		}
 	}
-#endif
 
-	kprintf("Init timer");
-	init_timer(50);
+	kprintf("Initializing PMM with %d KiB of memory...", memsize / 1024);
+	pmm_init(memsize);
 	kprintf(" [ OK ]\n");
 
-	kprintf("Init PS/2");
-	ps2_init();
-	kprintf(" [ OK ]\n");
+	if (mboot_ptr->flags & MULTIBOOT_FLAG_MMAP) {
+		mboot_memmap_t* mmap = (mboot_memmap_t*)mboot_ptr->mmap_addr;
+		while(mmap < mboot_ptr->mmap_addr + mboot_ptr->mmap_length) {
+			if (mmap->type != 1) {
+				pmm_mark_system((uintptr_t *)mmap->base_addr_low, mmap->length_low);
+			}
 
-	kprintf("Init keyboard");
-	ps2_dev_t kbd;
-	kbd.handler = &keyboard_interrupt;
-	ps2_register_device_driver(kbd, 0, &keyboard_init);
-	kprintf(" [ OK ]\n");
+			mmap = (mboot_memmap_t*) ( (uint32_t)mmap + mmap->size + sizeof(uint32_t) );
+		}
+	}
 
-	debug_print_vfs_tree();
+	if (mboot_ptr->flags & MULTIBOOT_INFO_ELF_SHDR) {
+		if (mboot_ptr->u.elf_sec.size == sizeof(Elf32_Shdr)) {
+			copied_elf_header = mboot_ptr->u.elf_sec;
+		} else {
+			kprintf("ELF header size mismatch! Will not load symbol table.\n");
+		}
+	}
 
-	console_run();
+	if (&copied_elf_header) {
+		debug_init(&copied_elf_header);
+	}
 
-	//kprintf("Reached end of control, system stopped.\n");
+	debug("Initializing paging structures.\n");
+
+	paging_init();
+
+	kprintf("\nHALT\n");
+	debug("Halting system.\n");
 
 	while (1) {
 		__asm__ __volatile__("hlt");
 	}
-
-	kprintf("\nHALT\n");
 }

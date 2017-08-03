@@ -25,12 +25,16 @@ mboot:
     dd  MBOOT_CHECKSUM          ; To ensure that the above values are correct
     
     dd  mboot                   ; Location of this descriptor
-;    dd  code                    ; Start of kernel '.text' (code) section.
-;    dd  bss                     ; End of kernel '.data' section.
+    dd  0                    	; Start of kernel '.text' (code) section.
+    dd  0                     	; End of kernel '.data' section.
     dd  end                     ; End of kernel.
     dd  start                   ; Kernel entry point (initial EIP).
+    dd 0x00000000
+	dd 800
+	dd 600
+	dd 24
 
-section .bootstrap_stack
+[SECTION .bootstrap_stack]
 align 16
 stack_bottom:
 times 32768 db 0		; 32KB stack
@@ -43,8 +47,7 @@ stack_top:
 [EXTERN kmain]                   ; This is the entry point of our C code
 
 start:
-    mov esp, stack_bottom
-    and esp, $-16
+    mov esp, stack_top
     ; Load multiboot information:
     push esp
     push ebx

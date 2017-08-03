@@ -1,8 +1,8 @@
 #ifndef __PMM_H
 #define __PMM_H
 
-#include "stdint.h"
-#include "stddef.h"
+#include <stdint.h>
+#include <stddef.h>
 
 uint32_t pmm_num_frames();
 
@@ -21,5 +21,7 @@ uintptr_t *pmm_alloc_n(size_t n);
 void pmm_free(uintptr_t *p);
 
 void pmm_mark_system (uintptr_t *base, uint32_t len);
+
+void pmm_dump_map();
 
 #endif
