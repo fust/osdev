@@ -30,8 +30,8 @@ mboot:
     dd  end                     ; End of kernel.
     dd  start                   ; Kernel entry point (initial EIP).
     dd 0x00000000
-	dd 800
-	dd 600
+	dd 1024
+	dd 768
 	dd 24
 
 [SECTION .bootstrap_stack]

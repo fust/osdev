@@ -15,6 +15,8 @@ typedef uint32_t bitmap_index_t;
 
 bitmap_t * bitmap_create(uint32_t num_indices);
 
+uint32_t bitmap_size(bitmap_t *bitmap);
+
 void bitmap_set(bitmap_t * bitmap, bitmap_index_t index);
 
 void bitmap_clear(bitmap_t * bitmap, bitmap_index_t index);

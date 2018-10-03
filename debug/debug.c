@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <mem/pmm.h>
 
 uint8_t panicing = 0;
 
@@ -99,6 +100,7 @@ static void get_elf32_symbols_mboot(uint32_t section_headers, Elf32_Half shnum, 
 		symbol_table.symbols[--function_syms].start = (uint32_t *)sym->st_value;
 		symbol_table.symbols[function_syms].end = (uint32_t *)(sym->st_value + sym->st_size);
 		symbol_table.symbols[function_syms].name = &strings[sym->st_name];
+//		debug("[DEBUGGER]: Loaded symbol '%s' (0x%x - 0x%x)\n", symbol_table.symbols[function_syms].name, symbol_table.symbols[function_syms].start, symbol_table.symbols[function_syms].end);
 	}
 
 	if (function_syms) {
@@ -107,6 +109,8 @@ static void get_elf32_symbols_mboot(uint32_t section_headers, Elf32_Half shnum, 
 	/* Adjust the pointer if there are leftovers */
 	symbol_table.count -= function_syms;
 	symbol_table.symbols = &symbol_table.symbols[function_syms];
+
+	pmm_mark_system(symbol_table.symbols, sizeof(symbol_table));
 
 	debug("Debugger initialized. Loaded %d kernel symbols\n", symbol_table.count);
 }
@@ -118,7 +122,7 @@ void get_elf_symbols_mboot(multiboot_elf_section_header_table_t *mboot_elf)
 
 void debug_init(multiboot_elf_section_header_table_t * elf_header)
 {
-	debug("Kernel symbols present: %x\nDebugger initializing.", elf_header->addr);
+	debug("Kernel symbols present: %x\nDebugger initializing.\n", elf_header->addr);
 	get_elf_symbols_mboot(elf_header);
 }
 
@@ -142,8 +146,10 @@ struct sym_offset get_symbol(uint32_t *addr)
 	for (i = 0; i < symbol_table.count; i++) {
 		sym = &symbol_table.symbols[i];
 		uint32_t offset = __symbol_offset(addr, sym);
-		if (offset)
+		//debug("[DBG]: testing 0x%x for 0x%x\n", sym, addr);
+		if (offset) {
 			return (struct sym_offset){sym->name, offset};
+		}
 	}
 
 	return (struct sym_offset){"????", 0};

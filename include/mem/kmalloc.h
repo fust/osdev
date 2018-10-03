@@ -11,4 +11,6 @@ uint32_t kmalloc_ap(uint32_t size, uint32_t *phys);
 
 uint32_t kfree(uint32_t *address);
 
+uint32_t kcalloc(uint32_t size);
+
 #endif

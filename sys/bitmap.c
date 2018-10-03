@@ -15,6 +15,7 @@
 bitmap_t * bitmap_create(uint32_t num_indices)
 {
 	bitmap_t *b = (bitmap_t *)kmalloc((size_t) (sizeof(bitmap_t) + (num_indices / BYTE_SIZE)));
+	debug("\t[BITMAP]: Allocating from 0x%x to 0x%x (indices=%d)\n", b, b + (sizeof(bitmap_t) + (num_indices / BYTE_SIZE)), num_indices);
 
 	if (b == NULL) {
 		return NULL;
@@ -25,12 +26,14 @@ bitmap_t * bitmap_create(uint32_t num_indices)
 
 	memset(map, 0, (size_t) b->num_bytes);
 
-/*	for (uint16_t i = 0; i <= b->num_bytes; i++) {
-		map[i] = 0;
-	}*/
 	b->map = map;
 
 	return b;
+}
+
+uint32_t bitmap_size(bitmap_t *bitmap)
+{
+	return sizeof(bitmap_t) + bitmap->num_bytes;
 }
 
 /**

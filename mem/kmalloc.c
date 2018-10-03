@@ -1,5 +1,6 @@
 #include "mem/kmalloc.h"
 #include "mem/kheap.h"
+#include "string.h"
 #include <stdint.h>
 
 extern uint32_t placement_pointer;
@@ -53,6 +54,16 @@ uint32_t kfree(uint32_t *address)
 		klfree(address);
 	}
 	return 0;
+}
+
+uint32_t kcalloc(uint32_t size)
+{
+	uint32_t p = kmalloc(size);
+	if (p) {
+		memset((void *)p, 0, size);
+	}
+
+	return p;
 }
 
 // Liballoc hooks

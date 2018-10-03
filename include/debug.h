@@ -8,7 +8,7 @@
 #include <cpu.h>
 #include <video.h>
 
-#define BOCHS_BREAK() { asm volatile ("xchgw %bx, %bx"); }
+#define BOCHS_BREAK() { __asm__ __volatile__ ("xchgw %bx, %bx"); }
 
 extern uint8_t panicing;
 

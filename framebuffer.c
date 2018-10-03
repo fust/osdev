@@ -46,7 +46,7 @@ void framebuffer_write_char(const char c)
 {
 	if (c == '\n') {
 		screen_x = 0;
-		screen_y += 13;
+		screen_y += 15;
 		return;
 	}
 
@@ -64,9 +64,19 @@ void framebuffer_write_char(const char c)
 
 	screen_x += 10;
 
-	if (screen_x > width) {
+	if (screen_x > width - 10) {
 		screen_y += 15;
 		screen_x = 0;
+	}
+
+	if (screen_y > height - 15) {
+		screen_y = 0;
+		screen_x = 0;
+		for (uint32_t i = 0; i < width; i++) {
+			for (uint32_t j = 0; j < 10; j++) {
+				put_pixel(i, j, 0x000000);
+			}
+		}
 	}
 }
 

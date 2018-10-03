@@ -1,5 +1,6 @@
 #include "mem/kheap.h"
 #include "sys/bitmap.h"
+#include "mem/pmm.h"
 #include "stddef.h"
 #include "debug.h"
 
@@ -21,6 +22,7 @@ void *heap_sbrk(uint32_t num_pages)
 	uint32_t free = bitmap_first_n_free(map, num_pages);
 
 	if (free == (uint32_t) -1) {
+		PANIC("[HEAP] OUT OF MEMORY while requesting %d page(s) of memory. (%d of %d frames used)", num_pages, pmm_used_frames(), pmm_num_frames());
 		return NULL;
 	}
 

@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-#define DEBUG
+//#define DEBUG
 
 
 /** This function is supposed to lock the memory data structures. It
