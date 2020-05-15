@@ -17,6 +17,7 @@
 #include "fs/initrd.h"
 #include "pci/pci.h"
 #include "fs/ata.h"
+#include "fs/ext2.h"
 
 extern uintptr_t end; // Defined in linker script
 uintptr_t kernel_end = 0;
@@ -208,6 +209,18 @@ void kmain(struct multiboot *mboot_ptr, unsigned int initial_stack)
 	debug("Enumerating PCI devices.\n");
 	pci_enumerate_busses();*/
 	ata_init();
+
+	filesystem_t * ext2 = ext2_register();
+	vfs_mount(ext2);
+
+	/*
+	debug("Trying to read superblock\n");
+	ext2_superblock_t *sb = ext2_read_superblock();
+	debug("Superblock read. Magic: 0x%x Volume name: %s \n", sb->magic, sb->volume_name);
+	uint32_t blocksize = 1024 << sb->log_block_size;
+	debug("Size of a block: %d bytes\n", blocksize);
+	debug("Size of volume: %d Mbytes\n", ((blocksize * sb->blocks_count) / 1024) / 1024);
+	*/
 
 	kprintf("\nHALT\n");
 	debug("Halting system.\n");

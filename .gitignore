@@ -3,6 +3,9 @@
 .settings
 *.o
 *.sh
+!update_image.sh
+!run_qemu.sh
+!run_bochs.sh
 make_initrd
 *.dump
 *.syms
@@ -12,4 +15,5 @@ stage1
 stage2
 pad
 *.txt
+!bochsrc.txt
 os.iso

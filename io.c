@@ -29,3 +29,20 @@ uint32_t inl(uint16_t port) {
 	__asm__ __volatile__("inl %1, %0" : "=a" (ret) : "dN" (port));
 	return ret;
 }
+
+uint16_t inw(uint16_t port)
+{
+	uint16_t ret;
+	asm volatile("inw %%dx, %%ax":"=a"(ret):"d"(port));
+	return ret;
+}
+
+void inws(uint16_t* buffer, uint8_t count, uint16_t port)
+{
+  __asm__ __volatile__(
+    "rep insw\n"
+    : "=c" ( count ), "=D" ( buffer )
+    : "d" ( port ), "0" ( count ), "1" ( buffer )
+    : "memory"
+  );
+}

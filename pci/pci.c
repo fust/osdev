@@ -101,8 +101,13 @@ pci_bar_t * pci_read_bar(uint8_t bus, uint8_t dev, uint8_t func, uint8_t barnum)
 			barnum = PCI_BAR5;
 			break;
 	}
-debug("[PCI]: Reading %d::%d::%d offset 0x%x\n", bus, dev, func, barnum);
+debug("[PCI]: Reading %d::%d::%d offset 0x%x: ", bus, dev, func, barnum);
 	uint32_t b = (uint32_t) pci_config_read(bus, dev, func, barnum, 4);
+debug("0x%x \n", b);
+
+	if (b == 0x0) {
+		return 0;
+	}
 
 	if (!b) {
 		return NULL;

@@ -93,6 +93,29 @@
 #define      ATA_READ      0x00
 #define      ATA_WRITE     0x01
 
+struct IDEChannelRegisters {
+   unsigned short base;  // I/O Base.
+   unsigned short ctrl;  // Control Base
+   unsigned short bmide; // Bus Master IDE
+   unsigned char  nIEN;  // nIEN (No Interrupt);
+} channels[2];
+
+struct ide_device {
+   unsigned char  Reserved;    // 0 (Empty) or 1 (This Drive really exists).
+   unsigned char  Channel;     // 0 (Primary Channel) or 1 (Secondary Channel).
+   unsigned char  Drive;       // 0 (Master Drive) or 1 (Slave Drive).
+   unsigned short Type;        // 0: ATA, 1:ATAPI.
+   unsigned short Signature;   // Drive Signature
+   unsigned short Capabilities;// Features.
+   unsigned int   CommandSets; // Command Sets Supported.
+   unsigned int   Size;        // Size in Sectors.
+   unsigned char  Model[41];   // Model in string.
+} ide_devices[4];
+
+unsigned char ide_print_error(unsigned int drive, unsigned char err);
+
+int ide_read_sectors(unsigned char drive, unsigned char numsects, unsigned int lba, uint8_t * edi);
+
 void ata_init();
 
 #endif

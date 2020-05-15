@@ -29,8 +29,8 @@ void gpf_handler(registers_t * regs)
 	uint32_t faulting_address;
 	__asm__ __volatile__("mov %%cr2, %0" : "=r" (faulting_address));
 
-	debug("General protection fault! 0x%x", faulting_address);
-	kprintf("General protection fault! 0x%x", faulting_address);
+	debug("General protection fault! 0x%x at 0x%x", regs->err_code, faulting_address);
+	kprintf("General protection fault! 0x%x at 0x%x", regs->err_code, faulting_address);
 
 	for (;;) {
 		__asm__ __volatile__("cli");
